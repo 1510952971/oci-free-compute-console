@@ -1,0 +1,36 @@
+# Copy this file to config.toml and replace every value in angle brackets.
+region = "<your-home-region>"
+compartment_id = "<ocid1.compartment...>"
+subnet_id = "<ocid1.subnet...>"
+arm_image_id = "<ocid1.image...>"
+micro_image_id = "<ocid1.image...>"
+image_operating_system = "Canonical Ubuntu"
+image_operating_system_version = ""
+ssh_public_key_file = "~/.ssh/id_ed25519.pub"
+
+# Instances use names such as free-oci-arm-1 and free-oci-micro-1.
+# Use a unique prefix if the compartment is shared.
+display_name_prefix = "free-oci"
+
+# Leave empty to try every availability domain in the region.
+availability_domains = []
+
+assign_public_ip = true
+# arm_full, arm_dual, micro_dual, or mixed.
+default_preset = "arm_full"
+
+# Exactly one launch request is made per interval. Targets and ADs rotate.
+retry_seconds = 480
+jitter_seconds = 240
+daily_attempt_limit = 120
+
+# Standard OCI SDK config. Security-token profiles are also supported.
+oci_config_file = "~/.oci/config"
+oci_profile = "DEFAULT"
+
+# Optional remote notifications. macOS notifications work without these.
+pushplus_token = ""
+pushplus_topic = ""
+telegram_bot_token = ""
+telegram_chat_id = ""
+notification_proxy = ""

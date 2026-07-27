@@ -1,0 +1,13 @@
+.venv/
+config.toml
+__pycache__/
+*.pyc
+*.pem
+*.rtf
+.grab_a1_state.json
+.grab_a1.lock
+.DS_Store
+.idea/
+.vscode/
+.coverage
+htmlcov/

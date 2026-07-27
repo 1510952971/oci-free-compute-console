@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>OCI 免费实例控制台</title>
+  <style>
+    :root{color-scheme:dark;--bg:#151719;--surface:#202326;--surface2:#272b2f;--line:#3b4146;--text:#f4f6f7;--muted:#9ba4aa;--green:#59c58d;--blue:#5bb9dc;--orange:#efa44d;--red:#ef6d68}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:0}button,input,select{font:inherit;letter-spacing:0}
+    header{height:64px;border-bottom:1px solid var(--line);background:#191c1e;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:5}.brand{display:flex;align-items:center;gap:12px}.brand-mark{width:32px;height:32px;border:1px solid #54717d;background:#21333a;border-radius:6px;display:grid;place-items:center;color:var(--blue);font-weight:900}.brand h1{font-size:16px;margin:0}.brand small{display:block;color:var(--muted);font-size:11px}.connection{display:flex;align-items:center;gap:8px;color:var(--red);font-size:12px}.connection.ok{color:var(--green)}.dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+    main{max-width:1320px;margin:auto;padding:24px 28px 38px}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}.toolbar-left{display:flex;align-items:center;gap:10px;min-width:0}.phase{font-size:20px;font-weight:760;overflow-wrap:anywhere}.message{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:600px}.actions{display:flex;gap:8px}.btn{height:36px;border-radius:6px;border:1px solid var(--line);background:var(--surface2);color:var(--text);padding:0 13px;cursor:pointer;font-weight:700}.btn:hover{border-color:#667078}.btn:disabled{opacity:.45;cursor:not-allowed}.btn.primary{background:#176d8b;border-color:#2c8eaf}.btn.danger{background:#713431;border-color:#9a4945}.icon-btn{width:36px;padding:0;font-size:15px}.icon-btn[title]{position:relative}
+    .metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}.metric{padding:15px 16px;border-right:1px solid var(--line);min-width:0}.metric:last-child{border:0}.metric-label{color:var(--muted);font-size:11px}.metric-value{font-size:19px;font-weight:760;margin-top:5px;overflow-wrap:anywhere}.meter{height:4px;background:#111315;margin-top:10px}.meter span{display:block;height:100%;background:var(--blue);transition:width .3s}.meter.warn span{background:var(--orange)}
+    .workspace{display:grid;grid-template-columns:360px minmax(0,1fr);gap:18px;margin-top:18px}.sidebar,.content{min-width:0}.section{border-top:1px solid var(--line);padding:18px 0}.section:first-child{border-top:0;padding-top:0}.section-title{font-size:12px;color:var(--muted);font-weight:750;margin:0 0 10px;text-transform:uppercase}.preset-list{display:grid;gap:7px}.preset{display:flex;align-items:center;gap:10px;width:100%;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);padding:10px 11px;text-align:left;cursor:pointer}.preset:hover,.preset.selected{border-color:var(--blue);background:#203039}.preset input{accent-color:var(--blue)}.preset-name{font-weight:720}.preset-detail{color:var(--muted);font-size:11px;margin-left:auto;text-align:right}
+    .custom{display:grid;grid-template-columns:20px 1fr 58px 64px 64px 66px;gap:6px;align-items:center;margin:8px 0}.custom label{font-weight:700}.custom input[type=checkbox]{accent-color:var(--blue)}.field{width:100%;height:32px;border:1px solid var(--line);border-radius:5px;background:#17191b;color:var(--text);padding:0 7px}.field:disabled{opacity:.35}.field-labels{color:var(--muted);font-size:10px}.control-note{font-size:11px;color:var(--muted);margin-top:8px}.control-error{min-height:18px;color:var(--red);font-size:12px;margin-top:8px}
+    .panel{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;margin-bottom:18px}.panel-head{height:42px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.panel-title{font-size:12px;font-weight:760;color:#dce1e4}.panel-meta{font-size:11px;color:var(--muted)}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:750}tr:last-child td{border-bottom:0}.state{font-size:11px;color:var(--green);font-weight:700}.unmanaged{color:var(--orange)}.empty{color:var(--muted);padding:25px 14px;text-align:center}
+    .attempt{display:grid;grid-template-columns:1.2fr 1fr 1.3fr .8fr;gap:0}.attempt-item{padding:13px 14px;border-right:1px solid var(--line)}.attempt-item:last-child{border:0}.attempt-label{font-size:10px;color:var(--muted);margin-bottom:4px}.attempt-value{font-weight:700;overflow-wrap:anywhere}.logs{max-height:330px;overflow:auto}.log{display:grid;grid-template-columns:154px 64px 1fr;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line)}.log:last-child{border:0}.log-time,.log-level{font-size:11px;color:var(--muted)}.log-level.success{color:var(--green)}.log-level.warn,.log-level.capacity{color:var(--orange)}.log-level.error{color:var(--red)}
+    footer{max-width:1320px;margin:auto;padding:0 28px 24px;color:var(--muted);font-size:11px;display:flex;justify-content:space-between}
+    @media(max-width:1000px){.metrics{grid-template-columns:repeat(2,1fr)}.metric{border-bottom:1px solid var(--line)}.workspace{grid-template-columns:1fr}.sidebar{display:grid;grid-template-columns:1fr 1fr;gap:18px}.sidebar .section{border-top:0;padding-top:0}.message{display:none}}
+    @media(max-width:650px){header{padding:0 16px}.connection{display:none}.brand{min-width:0}.brand h1{font-size:15px;white-space:nowrap}.brand small{overflow:hidden;text-overflow:ellipsis}main{padding:18px 16px}.toolbar{align-items:flex-start;flex-direction:column}.toolbar-left{width:100%}.actions{width:100%;justify-content:flex-end}.phase{font-size:17px}.metrics{grid-template-columns:1fr}.metric{border-right:0}.sidebar{display:block}.attempt{grid-template-columns:1fr 1fr}.attempt-item:nth-child(2){border-right:0}.attempt-item:nth-child(-n+2){border-bottom:1px solid var(--line)}.log{grid-template-columns:1fr;gap:2px}.custom{grid-template-columns:20px 1fr 50px 56px 56px 58px}.table-wrap{overflow:auto}footer{padding:0 16px 20px;display:block}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><div class="brand-mark">OC</div><div><h1>OCI 免费实例控制台</h1><small id="region">-</small></div></div>
+    <div class="connection" id="connection"><span class="dot"></span><span id="connectionText">连接中</span></div>
+  </header>
+  <main>
+    <div class="toolbar">
+      <div class="toolbar-left"><div><div class="phase" id="phase">正在载入</div><div class="message" id="message"></div></div></div>
+      <div class="actions">
+        <button class="btn icon-btn" id="notify" title="测试通知" aria-label="测试通知">⌁</button>
+        <button class="btn danger" id="stop" disabled><span aria-hidden="true">■</span> 停止</button>
+        <button class="btn primary" id="start"><span aria-hidden="true">▶</span> 启动</button>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">ARM OCPU</div><div class="metric-value" id="armCpu">- / 2</div><div class="meter"><span id="armCpuBar"></span></div></div>
+      <div class="metric"><div class="metric-label">ARM 内存</div><div class="metric-value" id="armMem">- / 12 GB</div><div class="meter"><span id="armMemBar"></span></div></div>
+      <div class="metric"><div class="metric-label">AMD Micro</div><div class="metric-value" id="micro">- / 2</div><div class="meter"><span id="microBar"></span></div></div>
+      <div class="metric"><div class="metric-label">启动盘</div><div class="metric-value" id="boot">- / 200 GB</div><div class="meter warn"><span id="bootBar"></span></div></div>
+      <div class="metric"><div class="metric-label">今日请求</div><div class="metric-value" id="attempts">- / 120</div><div class="meter warn"><span id="attemptBar"></span></div></div>
+    </div>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <section class="section">
+          <h2 class="section-title">预设方案</h2>
+          <div class="preset-list" id="presets"></div>
+        </section>
+        <section class="section">
+          <h2 class="section-title">自定义组合</h2>
+          <div class="custom field-labels"><span></span><span>规格</span><span>台数</span><span>OCPU</span><span>内存</span><span>磁盘</span></div>
+          <div class="custom">
+            <input type="checkbox" id="armOn"><label for="armOn">ARM</label><input class="field" id="armCount" type="number" min="1" max="2" value="1"><input class="field" id="armOcpu" type="number" min="1" max="2" value="2"><input class="field" id="armMemory" type="number" min="1" max="12" value="12"><input class="field" id="armBoot" type="number" min="50" max="200" value="50">
+          </div>
+          <div class="custom">
+            <input type="checkbox" id="microOn"><label for="microOn">AMD</label><input class="field" id="microCount" type="number" min="1" max="2" value="2"><input class="field" value="1" disabled><input class="field" value="1" disabled><input class="field" id="microBoot" type="number" min="50" max="200" value="50">
+          </div>
+          <div class="control-note">免费上限：ARM 2C/12G，AMD 2 台，启动盘合计 200GB</div>
+          <div class="control-error" id="controlError"></div>
+        </section>
+      </aside>
+
+      <div class="content">
+        <section class="panel">
+          <div class="panel-head"><h2 class="panel-title">当前请求</h2><span class="panel-meta" id="next">--</span></div>
+          <div id="last"><div class="empty">尚未发送创建请求</div></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h2 class="panel-title">账户实例</h2><span class="panel-meta" id="instanceCount">0 台</span></div>
+          <div class="table-wrap"><table><thead><tr><th>名称</th><th>规格</th><th>状态</th><th>可用域</th></tr></thead><tbody id="instances"></tbody></table><div class="empty" id="instanceEmpty">没有活动实例</div></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h2 class="panel-title">活动记录</h2><span class="panel-meta">最近 100 条</span></div>
+          <div class="logs" id="history"><div class="empty">等待运行记录</div></div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <footer><span>仅监听 127.0.0.1</span><span>凭据不会发送到浏览器</span></footer>
+  <script>
+    const $=id=>document.getElementById(id);
+    const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const phases={idle:'等待任务',starting:'正在启动',running:'运行中',trying:'正在创建',waiting:'等待容量',accepted:'请求已接受',complete:'任务完成',daily_limit:'今日请求已达上限',rate_limited:'OCI 限流退避',network_error:'网络异常退避',stopping:'正在停止',stopped:'已停止',error:'任务错误'};
+    const running=new Set(['starting','running','trying','waiting','accepted','daily_limit','rate_limited','network_error','stopping']);
+    let selected='arm_full',presets={},status={};
+    const pct=(value,limit)=>`${Math.min(100,Math.max(0,(Number(value)||0)/limit*100))}%`;
+    const fmtTime=value=>value?new Date(value).toLocaleString():'--';
+    async function api(path,options={}){const response=await fetch(path,{cache:'no-store',headers:{'Content-Type':'application/json'},...options});const data=await response.json();if(!response.ok)throw new Error(data.error||`HTTP ${response.status}`);return data}
+    function renderPresets(){
+      $('presets').innerHTML=Object.entries(presets).map(([key,p])=>{const detail=p.items.map(i=>`${i.count}×${i.shape==='arm'?`${i.ocpus}C/${i.memory_gbs}G`:'Micro'}`).join(' + ');return `<button class="preset ${selected===key?'selected':''}" data-key="${esc(key)}"><input type="radio" tabindex="-1" ${selected===key?'checked':''}><span class="preset-name">${esc(p.label)}</span><span class="preset-detail">${esc(detail)}</span></button>`}).join('');
+      document.querySelectorAll('.preset').forEach(button=>button.onclick=()=>{selected=button.dataset.key;document.querySelectorAll('#armOn,#microOn').forEach(x=>x.checked=false);renderPresets()});
+    }
+    function customItems(){
+      const items=[];
+      if($('armOn').checked)items.push({shape:'arm',count:+$('armCount').value,ocpus:+$('armOcpu').value,memory_gbs:+$('armMemory').value,boot_gbs:+$('armBoot').value});
+      if($('microOn').checked)items.push({shape:'micro',count:+$('microCount').value,ocpus:1,memory_gbs:1,boot_gbs:+$('microBoot').value});
+      return items;
+    }
+    function hasCustom(){return $('armOn').checked||$('microOn').checked}
+    async function start(){
+      $('controlError').textContent='';
+      try{const body=hasCustom()?{items:customItems()}:{preset:selected};await api('/api/start',{method:'POST',body:JSON.stringify(body)});await refresh()}catch(error){$('controlError').textContent=error.message}
+    }
+    async function stop(){try{await api('/api/stop',{method:'POST',body:'{}'});await refresh()}catch(error){$('controlError').textContent=error.message}}
+    function renderUsage(usage){
+      if(usage.error)return;
+      $('armCpu').textContent=`${usage.arm_ocpus} / 2`;$('armCpuBar').style.width=pct(usage.arm_ocpus,2);
+      $('armMem').textContent=`${usage.arm_memory_gbs} / 12 GB`;$('armMemBar').style.width=pct(usage.arm_memory_gbs,12);
+      $('micro').textContent=`${usage.micro_count} / 2`;$('microBar').style.width=pct(usage.micro_count,2);
+      $('boot').textContent=`${usage.boot_gbs} / 200 GB`;$('bootBar').style.width=pct(usage.boot_gbs,200);
+    }
+    function renderStatus(d){
+      status=d;$('region').textContent=d.region;$('phase').textContent=phases[d.phase]||d.phase;$('message').textContent=d.message||'';
+      $('connection').className='connection ok';$('connectionText').textContent='本机已连接';
+      $('attempts').textContent=`${d.daily_attempts} / ${d.daily_limit}`;$('attemptBar').style.width=pct(d.daily_attempts,d.daily_limit||1);
+      $('start').disabled=running.has(d.phase);$('stop').disabled=!running.has(d.phase)||d.phase==='stopping';$('next').textContent=d.next_attempt_at?`下次 ${fmtTime(d.next_attempt_at)}`:'--';
+      if(d.last_attempt){const a=d.last_attempt;$('last').innerHTML=`<div class="attempt"><div class="attempt-item"><div class="attempt-label">名称</div><div class="attempt-value">${esc(a.name)}</div></div><div class="attempt-item"><div class="attempt-label">规格</div><div class="attempt-value">${esc(a.size)}</div></div><div class="attempt-item"><div class="attempt-label">可用域</div><div class="attempt-value">${esc(a.ad)}</div></div><div class="attempt-item"><div class="attempt-label">启动盘</div><div class="attempt-value">${esc(a.boot_gbs)} GB</div></div></div>`}else $('last').innerHTML='<div class="empty">尚未发送创建请求</div>';
+      const rows=d.instances||[];$('instanceCount').textContent=`${rows.length} 台`;$('instances').innerHTML=rows.map(i=>`<tr><td><strong>${esc(i.name)}</strong></td><td>${esc(i.shape)}</td><td><span class="state ${i.managed?'':'unmanaged'}">${esc(i.state)}</span></td><td>${esc(i.ad)}</td></tr>`).join('');$('instanceEmpty').style.display=rows.length?'none':'block';
+      const levels={info:'信息',success:'成功',warn:'警告',capacity:'容量',error:'错误'};$('history').innerHTML=d.history?.length?d.history.map(h=>`<div class="log"><span class="log-time">${fmtTime(h.time)}</span><span class="log-level ${esc(h.level)}">${levels[h.level]||esc(h.level)}</span><span>${esc(h.message)}</span></div>`).join(''):'<div class="empty">等待运行记录</div>';
+    }
+    async function refresh(){try{const [d,usage]=await Promise.all([api('/api/status'),api('/api/usage')]);renderStatus(d);renderUsage(usage)}catch(error){$('connection').className='connection';$('connectionText').textContent='连接中断'}}
+    async function init(){try{const data=await api('/api/presets');presets=data.presets;renderPresets();await refresh()}catch(error){$('controlError').textContent=error.message}}
+    $('start').onclick=start;$('stop').onclick=stop;$('notify').onclick=async()=>{try{await api('/api/notify-test',{method:'POST',body:'{}'});$('controlError').textContent='测试通知已发送'}catch(error){$('controlError').textContent=error.message}};
+    document.querySelectorAll('#armOn,#microOn').forEach(x=>x.onchange=()=>{if(hasCustom()){selected='';renderPresets()}});
+    init();setInterval(refresh,5000);
+  </script>
+</body>
+</html>
