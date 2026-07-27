@@ -36,6 +36,9 @@ SHAPES = {
 }
 FREE_LIMITS = {"arm_ocpus": 2.0, "arm_memory_gbs": 12.0, "micro_count": 2, "boot_gbs": 200}
 MIN_BOOT_GBS = 50
+WATCHDOG_INTERVAL_SECONDS = 15
+WATCHDOG_RETRY_SECONDS = 60
+WORKER_STALL_SECONDS = 180
 PRESETS = {
     "arm_full": {
         "label": "ARM 2C / 12G",
@@ -294,6 +297,8 @@ class GrabEngine:
         self.lock = threading.RLock()
         self.job_stop = threading.Event()
         self.worker: threading.Thread | None = None
+        self.last_heartbeat = 0.0
+        self.next_watchdog_retry = 0.0
         self.images: dict[str, str] = {}
         self._usage_cache: tuple[float, dict[str, Any]] | None = None
         self.status_data: dict[str, Any] = {
@@ -322,7 +327,33 @@ class GrabEngine:
 
     def status(self) -> dict[str, Any]:
         with self.lock:
-            return json.loads(json.dumps(self.status_data))
+            payload = json.loads(json.dumps(self.status_data))
+        payload["worker_alive"] = bool(self.worker and self.worker.is_alive())
+        return payload
+
+    def heartbeat(self) -> None:
+        self.last_heartbeat = time.monotonic()
+
+    def watchdog(self) -> None:
+        job = self.saved.get("active_job")
+        if not job:
+            return
+        now = time.monotonic()
+        worker_alive = bool(self.worker and self.worker.is_alive())
+        if worker_alive:
+            if self.last_heartbeat and now - self.last_heartbeat > WORKER_STALL_SECONDS:
+                self.log("工作线程超过 3 分钟没有心跳，交由 launchd 重启进程", "error")
+                self.notify("OCI 抢占器正在自恢复", "工作线程失去响应，后台服务将自动重启")
+                os._exit(75)
+            return
+        if now < self.next_watchdog_retry:
+            return
+        self.next_watchdog_retry = now + WATCHDOG_RETRY_SECONDS
+        self.publish(phase="recovering", next_attempt_at=eta(WATCHDOG_RETRY_SECONDS))
+        self.log("看门狗发现工作线程已停止，正在自动恢复", "warn")
+        result = self.start(job["items"], job.get("preset"))
+        if not result["ok"]:
+            self.log(f"自动恢复暂时失败：{result['error']}；1 分钟后重试", "warn")
 
     def notify(self, title: str, message: str) -> None:
         threading.Thread(target=self._notify, args=(title, message), daemon=True).start()
@@ -450,6 +481,7 @@ class GrabEngine:
         self.saved["active_job"] = job
         save_state(self.saved)
         self.job_stop.clear()
+        self.heartbeat()
         self.publish(
             phase="starting", preset=job["preset"], items=normalized, targets=targets,
             next_attempt_at=None, last_attempt=None,
@@ -485,11 +517,13 @@ class GrabEngine:
     def _wait(self, seconds: float) -> bool:
         deadline = time.time() + seconds
         while time.time() < deadline:
+            self.heartbeat()
             if PROCESS_STOP.is_set() or self.job_stop.wait(min(1, deadline - time.time())):
                 return False
         return True
 
     def _run(self, job: dict[str, Any]) -> None:
+        self.heartbeat()
         prefix = self.settings["display_name_prefix"]
         targets = expand_targets(job["items"], prefix)
         network_failures = 0
@@ -499,12 +533,14 @@ class GrabEngine:
         self.notify("OCI 抢占任务已启动", f"区域 {self.settings['region']}，目标 {len(targets)} 台")
         try:
             while not PROCESS_STOP.is_set() and not self.job_stop.is_set():
+                self.heartbeat()
                 today = date.today().isoformat()
                 if self.saved["date"] != today:
                     self.saved.update(date=today, daily_attempts=0)
                     save_state(self.saved)
                 try:
                     usage = self.account_usage(force=True)
+                    self.heartbeat()
                     existing = {item["name"] for item in usage["instances"]}
                     missing = [target for target in targets if target["name"] not in existing]
                     self.publish(
@@ -571,6 +607,7 @@ class GrabEngine:
                         self.launch_details(target, ad), opc_retry_token=str(uuid.uuid4()),
                         retry_strategy=oci.retry.NoneRetryStrategy(),
                     )
+                    self.heartbeat()
                     accepted = True
                     rate_limit_streak = 0
                     self._usage_cache = None
@@ -731,8 +768,11 @@ def main() -> int:
             ENGINE.worker.join(timeout=5)
         server.shutdown()
         return 0
+    next_watchdog = 0.0
     while not PROCESS_STOP.wait(0.5):
-        pass
+        if time.monotonic() >= next_watchdog:
+            ENGINE.watchdog()
+            next_watchdog = time.monotonic() + WATCHDOG_INTERVAL_SECONDS
     ENGINE.stop()
     if ENGINE.worker:
         ENGINE.worker.join(timeout=10)

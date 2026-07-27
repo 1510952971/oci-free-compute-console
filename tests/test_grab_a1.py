@@ -60,6 +60,25 @@ class PlanValidationTests(unittest.TestCase):
         self.assertEqual(engine.status_data["message"], "still running")
         self.assertEqual(engine.status_data["history"][0]["message"], "still running")
 
+    def test_watchdog_restarts_a_missing_worker(self):
+        engine = grab_a1.GrabEngine.__new__(grab_a1.GrabEngine)
+        engine.lock = threading.RLock()
+        engine.status_data = {"history": [], "message": ""}
+        engine.saved = {"active_job": {"preset": "arm_full", "items": [{"shape": "arm"}]}}
+        engine.worker = None
+        engine.next_watchdog_retry = 0
+        engine.start = mock.Mock(return_value={"ok": True})
+        engine.watchdog()
+        engine.start.assert_called_once_with([{"shape": "arm"}], "arm_full")
+        self.assertEqual(engine.status_data["phase"], "recovering")
+
+    def test_watchdog_ignores_idle_service(self):
+        engine = grab_a1.GrabEngine.__new__(grab_a1.GrabEngine)
+        engine.saved = {"active_job": None}
+        engine.start = mock.Mock()
+        engine.watchdog()
+        engine.start.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

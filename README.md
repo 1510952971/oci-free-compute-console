@@ -146,6 +146,8 @@ install_background_service.command
 
 - 登录 macOS 后自动启动
 - 进程异常退出时自动重启
+- 工作线程意外退出时由进程内看门狗自动恢复
+- 工作线程超过 3 分钟无心跳时重启整个服务并续接任务
 - 自动恢复 `.grab_a1_state.json` 中未完成的任务
 - 标准日志写入 `~/Library/Logs/oci-free-compute-console.log`
 - 错误日志写入 `~/Library/Logs/oci-free-compute-console-error.log`
