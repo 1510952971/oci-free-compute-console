@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 *.pem
 *.rtf
+*.log
 .grab_a1_state.json
 .grab_a1.lock
 .DS_Store

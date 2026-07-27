@@ -1,4 +1,6 @@
+import threading
 import unittest
+from unittest import mock
 
 import grab_a1
 
@@ -48,6 +50,15 @@ class PlanValidationTests(unittest.TestCase):
         ])
         self.assertEqual(result[0]["ocpus"], 1)
         self.assertEqual(result[0]["memory_gbs"], 1)
+
+    def test_closed_output_pipe_does_not_kill_logging(self):
+        engine = grab_a1.GrabEngine.__new__(grab_a1.GrabEngine)
+        engine.lock = threading.RLock()
+        engine.status_data = {"history": [], "message": ""}
+        with mock.patch("builtins.print", side_effect=BrokenPipeError):
+            engine.log("still running")
+        self.assertEqual(engine.status_data["message"], "still running")
+        self.assertEqual(engine.status_data["history"][0]["message"], "still running")
 
 
 if __name__ == "__main__":

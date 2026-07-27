@@ -305,7 +305,11 @@ class GrabEngine:
         }
 
     def log(self, message: str, level: str = "info") -> None:
-        print(f"[{now_iso()}] {message}", flush=True)
+        # A detached terminal or closed pipe must never kill the worker.
+        try:
+            print(f"[{now_iso()}] {message}", flush=True)
+        except (BrokenPipeError, OSError):
+            pass
         with self.lock:
             history = self.status_data["history"]
             history.insert(0, {"time": now_iso(), "level": level, "message": message})

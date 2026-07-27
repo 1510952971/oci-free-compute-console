@@ -134,6 +134,32 @@ caffeinate -dimsu python grab_a1.py
 - 每日达到请求上限后会等待，午夜自动重置并继续。
 - 任务状态保存在 `.grab_a1_state.json`，异常退出后重新启动可恢复未完成任务。
 
+### 安装 macOS 后台服务
+
+不希望依赖终端窗口时，首次配置完成后双击：
+
+```text
+install_background_service.command
+```
+
+它会在当前用户的 `~/Library/LaunchAgents` 安装服务，并使用 `launchd + caffeinate`：
+
+- 登录 macOS 后自动启动
+- 进程异常退出时自动重启
+- 自动恢复 `.grab_a1_state.json` 中未完成的任务
+- 标准日志写入 `~/Library/Logs/oci-free-compute-console.log`
+- 错误日志写入 `~/Library/Logs/oci-free-compute-console-error.log`
+
+后台模式不需要保持终端窗口或浏览器页面打开。Mac 仍需接通电源、保持联网，MacBook 最好保持开盖。
+
+需要停止并移除后台服务时，双击：
+
+```text
+uninstall_background_service.command
+```
+
+卸载脚本不会删除配置、日志、项目文件或 OCI 云实例。
+
 ## 配置说明
 
 首次运行会生成忽略提交的 `config.toml`。模板见 `config.example.toml`。
@@ -257,6 +283,8 @@ API_KEY_SETUP.html         OCI API 密钥图文步骤
 discover_resources.py      只读资源发现辅助脚本
 config.example.toml        配置模板
 start.command              macOS 一键启动器
+install_background_service.command   安装 launchd 后台服务
+uninstall_background_service.command 卸载 launchd 后台服务
 tests/                     纯逻辑测试
 ```
 
