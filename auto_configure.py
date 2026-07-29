@@ -55,7 +55,7 @@ assign_public_ip = true
 default_preset = "arm_full"
 retry_seconds = 480
 jitter_seconds = 240
-daily_attempt_limit = 120
+daily_attempt_limit = 180
 oci_config_file = "~/.oci/config"
 oci_profile = "DEFAULT"
 

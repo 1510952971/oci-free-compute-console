@@ -100,7 +100,7 @@ def load_settings(path: Path) -> dict[str, Any]:
         "assign_public_ip": True,
         "retry_seconds": 480,
         "jitter_seconds": 240,
-        "daily_attempt_limit": 120,
+        "daily_attempt_limit": 180,
         "default_preset": "arm_full",
         "image_operating_system": "Canonical Ubuntu",
         "image_operating_system_version": "",

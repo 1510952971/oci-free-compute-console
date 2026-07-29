@@ -181,7 +181,7 @@ default_preset = "arm_full" # arm_full / arm_dual / micro_dual / mixed
 
 retry_seconds = 480
 jitter_seconds = 240
-daily_attempt_limit = 120
+daily_attempt_limit = 180
 ```
 
 请求间隔为 `retry_seconds + 0..jitter_seconds`。默认约 8-12 分钟，不建议改成秒级高频请求。
@@ -209,7 +209,7 @@ notification_proxy = "" # 仅 Telegram，例如 http://127.0.0.1:7890
 - 网络错误按 1、2、4、8、15 分钟退避。
 - OCI `429` 从 30 分钟开始指数退避，最长 2 小时。
 - 权限、镜像、参数和配额错误会停止任务，不会无限重试。
-- 默认每日最多 120 个创建请求，午夜按本机日期重置。
+- 默认每日最多 180 个创建请求；最短 8 分钟间隔下可覆盖全天，午夜按本机日期重置。
 - 程序只识别固定名称的目标，不会删除或修改其他实例。
 
 ## 命令行
@@ -250,7 +250,7 @@ python -m py_compile grab_a1.py auto_configure.py discover_resources.py install_
 
 这是 OCI 当前可用域没有对应免费规格容量，并非程序错误。保持低频运行并等待库存释放即可。
 
-### 达到 120 次后不再请求
+### 达到 180 次后不再请求
 
 这是每日安全上限。程序会等待到本机午夜，重置计数后自动继续。
 
