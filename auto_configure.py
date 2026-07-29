@@ -53,9 +53,9 @@ display_name_prefix = "free-oci"
 availability_domains = {ads!r}
 assign_public_ip = true
 default_preset = "arm_full"
-retry_seconds = 480
-jitter_seconds = 240
-daily_attempt_limit = 180
+retry_seconds = 180
+jitter_seconds = 120
+daily_attempt_limit = 480
 oci_config_file = "~/.oci/config"
 oci_profile = "DEFAULT"
 
