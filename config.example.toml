@@ -20,9 +20,9 @@ assign_public_ip = true
 default_preset = "arm_full"
 
 # Exactly one launch request is made per interval. Targets and ADs rotate.
-retry_seconds = 180
+retry_seconds = 120
 jitter_seconds = 120
-daily_attempt_limit = 480
+daily_attempt_limit = 720
 
 # Standard OCI SDK config. Security-token profiles are also supported.
 oci_config_file = "~/.oci/config"
