@@ -79,6 +79,16 @@ class PlanValidationTests(unittest.TestCase):
         engine.watchdog()
         engine.start.assert_not_called()
 
+    def test_retry_profile_switches_after_warmup(self):
+        settings = {
+            "warmup_seconds": 60, "warmup_jitter_seconds": 30,
+            "warmup_attempt_limit": 12, "retry_seconds": 120,
+            "jitter_seconds": 60,
+        }
+        self.assertEqual(grab_a1.retry_profile(settings, 0), (60, 30))
+        self.assertEqual(grab_a1.retry_profile(settings, 11), (60, 30))
+        self.assertEqual(grab_a1.retry_profile(settings, 12), (120, 60))
+
 
 if __name__ == "__main__":
     unittest.main()

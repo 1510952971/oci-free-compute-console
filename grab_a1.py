@@ -99,7 +99,10 @@ def load_settings(path: Path) -> dict[str, Any]:
         "availability_domains": [],
         "assign_public_ip": True,
         "retry_seconds": 120,
-        "jitter_seconds": 120,
+        "jitter_seconds": 60,
+        "warmup_seconds": 60,
+        "warmup_jitter_seconds": 30,
+        "warmup_attempt_limit": 12,
         "daily_attempt_limit": 720,
         "default_preset": "arm_full",
         "image_operating_system": "Canonical Ubuntu",
@@ -142,6 +145,9 @@ def load_state() -> dict[str, Any]:
         "daily_attempts": int(saved.get("daily_attempts", 0)),
         "cursor": int(saved.get("cursor", 0)),
         "active_job": saved.get("active_job"),
+        "stable_attempts": int(saved.get("stable_attempts", 0)),
+        "rate_limit_streak": int(saved.get("rate_limit_streak", 0)),
+        "rate_limit_until": float(saved.get("rate_limit_until", 0)),
     }
 
 
@@ -251,6 +257,13 @@ def assert_within_account_limits(usage: dict[str, Any], missing: list[dict[str, 
             f"{labels[key]} {projected[key]:g}/{FREE_LIMITS[key]:g}" for key in exceeded
         )
         raise ValueError(f"现有资源加本任务会超过免费额度：{details}")
+
+
+def retry_profile(settings: dict[str, Any], stable_attempts: int) -> tuple[int, int]:
+    """Return the warmup or steady-state delay profile."""
+    if stable_attempts < int(settings["warmup_attempt_limit"]):
+        return int(settings["warmup_seconds"]), int(settings["warmup_jitter_seconds"])
+    return int(settings["retry_seconds"]), int(settings["jitter_seconds"])
 
 
 def mac_notify(title: str, message: str) -> None:
@@ -536,8 +549,21 @@ class GrabEngine:
                 self.heartbeat()
                 today = date.today().isoformat()
                 if self.saved["date"] != today:
-                    self.saved.update(date=today, daily_attempts=0)
+                    self.saved.update(
+                        date=today, daily_attempts=0, stable_attempts=0,
+                        rate_limit_streak=0, rate_limit_until=0,
+                    )
                     save_state(self.saved)
+                cooldown = max(0, self.saved.get("rate_limit_until", 0) - time.time())
+                if cooldown:
+                    pause = int(cooldown + 0.999)
+                    self.publish(phase="rate_limited", next_attempt_at=eta(pause))
+                    self.log(f"限流冷却中，剩余约 {pause // 60} 分 {pause % 60} 秒", "warn")
+                    if not self._wait(cooldown):
+                        break
+                    self.saved["rate_limit_until"] = 0
+                    save_state(self.saved)
+                    continue
                 try:
                     usage = self.account_usage(force=True)
                     self.heartbeat()
@@ -610,22 +636,35 @@ class GrabEngine:
                     self.heartbeat()
                     accepted = True
                     rate_limit_streak = 0
+                    self.saved["rate_limit_streak"] = 0
+                    self.saved["rate_limit_until"] = 0
+                    self.saved["stable_attempts"] = self.saved.get("stable_attempts", 0) + 1
+                    save_state(self.saved)
                     self._usage_cache = None
                     self.publish(phase="accepted")
                     self.log(f"创建请求已接受：{response.data.display_name}", "success")
                     self.notify("OCI 实例请求已接受", f"{target['name']}，{attempt['size']}，{ad}")
                 except oci.exceptions.ServiceError as error:
                     if error.status == 429:
-                        rate_limit_streak += 1
-                        extra_delay = min(7200, 1800 * 2 ** (rate_limit_streak - 1))
+                        rate_limit_streak = max(rate_limit_streak, self.saved.get("rate_limit_streak", 0)) + 1
+                        extra_delay = min(7200, 150 * 2 ** (rate_limit_streak - 1))
+                        self.saved["rate_limit_streak"] = rate_limit_streak
+                        self.saved["rate_limit_until"] = time.time() + extra_delay
+                        self.saved["stable_attempts"] = 0
+                        save_state(self.saved)
                         self.publish(phase="rate_limited")
-                        self.log(f"OCI 限流，至少退避 {extra_delay // 60} 分钟", "warn")
+                        self.log(f"OCI 限流，退避 {extra_delay // 60} 分钟", "warn")
+                        continue
                     elif error.code in {"LimitExceeded", "QuotaExceeded"}:
                         self._finish("error", f"{SHAPES[target['shape']]['label']} 配额不足：{error.message}", "error")
                         self.notify("OCI 配额不足", error.message)
                         return
                     elif error.code == "OutOfHostCapacity" or "capacity" in str(error).lower():
                         rate_limit_streak = 0
+                        self.saved["rate_limit_streak"] = 0
+                        self.saved["rate_limit_until"] = 0
+                        self.saved["stable_attempts"] = self.saved.get("stable_attempts", 0) + 1
+                        save_state(self.saved)
                         self.publish(phase="waiting")
                         self.log(f"{ad} 暂无容量，将轮换下一个候选", "capacity")
                     else:
@@ -637,8 +676,7 @@ class GrabEngine:
 
                 if accepted and not self._wait(20):
                     break
-                delay = int(self.settings["retry_seconds"])
-                jitter = int(self.settings["jitter_seconds"])
+                delay, jitter = retry_profile(self.settings, self.saved.get("stable_attempts", 0))
                 sleep_for = max(delay + random.randint(0, max(0, jitter)), extra_delay)
                 self.publish(phase="waiting", next_attempt_at=eta(sleep_for))
                 self.log(f"下次单个创建请求将在 {sleep_for // 60} 分 {sleep_for % 60} 秒后发送")

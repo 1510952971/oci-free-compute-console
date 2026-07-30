@@ -21,7 +21,10 @@ default_preset = "arm_full"
 
 # Exactly one launch request is made per interval. Targets and ADs rotate.
 retry_seconds = 120
-jitter_seconds = 120
+jitter_seconds = 60
+warmup_seconds = 60
+warmup_jitter_seconds = 30
+warmup_attempt_limit = 12
 daily_attempt_limit = 720
 
 # Standard OCI SDK config. Security-token profiles are also supported.

@@ -180,11 +180,14 @@ display_name_prefix = "free-oci"
 default_preset = "arm_full" # arm_full / arm_dual / micro_dual / mixed
 
 retry_seconds = 120
-jitter_seconds = 120
+jitter_seconds = 60
+warmup_seconds = 60
+warmup_jitter_seconds = 30
+warmup_attempt_limit = 12
 daily_attempt_limit = 720
 ```
 
-请求间隔为 `retry_seconds + 0..jitter_seconds`。默认约 2-4 分钟，不建议改成秒级高频请求。
+前 12 次使用 `warmup_seconds + 0..warmup_jitter_seconds`，默认约 1-1.5 分钟；之后使用 `retry_seconds + 0..jitter_seconds`，默认约 2-3 分钟。不建议改成秒级高频请求。
 
 ## 通知配置
 
@@ -207,7 +210,7 @@ notification_proxy = "" # 仅 Telegram，例如 http://127.0.0.1:7890
 - 每个创建请求使用独立的 OCI 幂等令牌。
 - `OutOfHostCapacity` 视为正常容量不足并继续轮换。
 - 网络错误按 1、2、4、8、15 分钟退避。
-- OCI `429` 从 30 分钟开始指数退避，最长 2 小时。
+- OCI `429` 首次退避 150 秒，连续触发时按 5、10、20 分钟递增，最长 2 小时；冷却状态会跨重启保存。
 - 权限、镜像、参数和配额错误会停止任务，不会无限重试。
 - 默认每日最多 720 个创建请求；最短 2 分钟间隔下可覆盖全天，午夜按本机日期重置。
 - 程序只识别固定名称的目标，不会删除或修改其他实例。
